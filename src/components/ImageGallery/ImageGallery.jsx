@@ -2,12 +2,13 @@ import { ImageGalleryItem } from 'components/ImageGalleryItem/ImageGalleryItem';
 import { GalleryList } from './ImageGallery.styled';
 
 export const ImageGallery = ({
-  options,
+  request,
+  images,
   handlerGetInfoModal,
   handlerOpenModal,
 }) => {
-  if (options.request !== '') {
-    const imagesArr = options.images.map(el => (
+  if (request !== '') {
+    const imagesArr = images.map(el => (
       <ImageGalleryItem
         key={el.id}
         webformatURL={el.webformatURL}

@@ -1,4 +1,5 @@
 import { Component } from 'react';
+import { useState, useEffect } from 'react';
 import { fetchImages } from './Api';
 import { Audio } from 'react-loader-spinner';
 import { Searchbar } from './Searchbar/Searchbar';
@@ -6,7 +7,96 @@ import { ImageGallery } from './ImageGallery/ImageGallery';
 import { Button } from './Button/Button';
 import { Modal } from './Modal/Modal';
 import toast, { Toaster } from 'react-hot-toast';
-export class App extends Component {
+
+export const App = () => {
+  const [request, setRequest] = useState('');
+  const [images, setImages] = useState([]);
+  const [page, setPage] = useState(1);
+  const [totalHits, setTotalHits] = useState(0);
+  const [apiLoader, setApiLoader] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [largePhotoURL, setLargePhotoURL] = useState(null);
+  const requestCheck =
+    request.slice(request.indexOf('/') + 1, request.length) !== '';
+  useEffect(() => {
+    const getApiData = async () => {
+      try {
+        if (requestCheck) {
+          setApiLoader(true);
+          const images = await fetchImages({ request, page });
+          if (page === 1) {
+            setTotalHits(images.totalHits - 12);
+          }
+          setImages(prevState => [...prevState, ...images.hits]);
+        }
+      } catch (error) {
+        toast.error('Error! Something was wrong!');
+      } finally {
+        setApiLoader(false);
+      }
+    };
+
+    getApiData();
+  }, [request, page, requestCheck]);
+
+  const handlerSubmit = evt => {
+    evt.preventDefault();
+    setRequest(`${Date.now()}/${evt.target.elements.request.value.trim()}`);
+    setImages([]);
+    setPage(1);
+    setTotalHits(0);
+  };
+
+  const handlerClick = () => {
+    if (request !== '') {
+      setPage(prevState => prevState + 1);
+      setTotalHits(prevState => prevState - 12);
+    }
+  };
+
+  // const handlerGetInfoModal = value => {
+  //   setLargePhotoURL(value);
+  // };
+
+  const handlerOpenModal = () => {
+    setShowModal(true);
+  };
+
+  const handlerCloseModal = () => {
+    setShowModal(false);
+  };
+
+  return (
+    <>
+      <Searchbar onSubmit={handlerSubmit} />
+      <ImageGallery
+        request={request}
+        images={images}
+        handlerGetInfoModal={setLargePhotoURL}
+        handlerOpenModal={handlerOpenModal}
+      />
+      {apiLoader && (
+        <Audio
+          height="80"
+          width="80"
+          radius="9"
+          color="blue"
+          ariaLabel="three-dots-loading"
+          wrapperStyle={{
+            justifyContent: 'center',
+          }}
+          wrapperClassName
+        />
+      )}
+      {totalHits > 0 && <Button onClickBtn={handlerClick} />}
+      {showModal && (
+        <Modal options={largePhotoURL} onCloseModal={handlerCloseModal} />
+      )}
+      <Toaster />
+    </>
+  );
+};
+export class OldApp extends Component {
   state = {
     request: '',
     images: [],
